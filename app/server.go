@@ -19,21 +19,17 @@ func main() {
 	server := http.NewServer("0.0.0.0:4221")
 
 	server.HandleStrict(http.GET, "/", func(request http.Request) http.Response {
-		response := http.NewResponse()
-		response.AddHeader("Content-Type", "text/plain")
-		return response
+		return http.OKResponse()
 	})
 
 	server.Handle(http.GET, "/echo/", func(request http.Request) http.Response {
-		response := http.NewResponse()
-		response.AddHeader("Content-Type", "text/plain")
+		response := http.OKResponse()
 		response.SetBody(request.Path[6:])
 		return response
 	})
 
 	server.Handle(http.GET, "/user-agent", func(request http.Request) http.Response {
-		response := http.NewResponse()
-		response.AddHeader("Content-Type", "text/plain")
+		response := http.OKResponse()
 		response.SetBody(request.Headers["User-Agent"])
 		return response
 	})
@@ -65,10 +61,7 @@ func main() {
 
 		file.Write([]byte(request.Body))
 
-		response := http.NewResponse()
-		response.AddHeader("Content-Type", "text/plain")
-		response.Status = http.Created
-		return response
+		return http.CreatedResponse()
 	})
 
 	server.ListenAndServe()

@@ -203,6 +203,19 @@ func NewResponse() Response {
 	}
 }
 
+func OKResponse() Response {
+	response := NewResponse()
+	response.AddHeader("Content-Type", "text/plain")
+	return response
+}
+
+func CreatedResponse() Response {
+	response := NewResponse()
+	response.Status = Created
+	response.AddHeader("Content-Type", "text/plain")
+	return response
+}
+
 func (r *Response) AddHeader(key string, value string) {
 	r.Headers[key] = value
 }
