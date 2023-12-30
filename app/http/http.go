@@ -66,6 +66,7 @@ type Response struct {
 	Protocol string
 	Status   Status
 	Headers  []Header
+	Body     string
 }
 
 func NewResponse() Response {
@@ -73,6 +74,7 @@ func NewResponse() Response {
 		Protocol: "HTTP/1.1",
 		Status:   OK,
 		Headers:  []Header{},
+		Body:     "",
 	}
 }
 
@@ -80,12 +82,20 @@ func (r *Response) AddHeader(header Header) {
 	r.Headers = append(r.Headers, header)
 }
 
+func (r Response) HeadersString() string {
+	var s string
+	for _, header := range r.Headers {
+		s += header.String() + "\r\n"
+	}
+	return s
+}
+
 func (r Response) Marshal() []byte {
 	return []byte(r.String())
 }
 
 func (r Response) String() string {
-	return fmt.Sprintf("%s %d %s\r\n%s\r\n\r\n", r.Protocol, r.Status, StatusText(r.Status), r.Headers)
+	return fmt.Sprintf("%s %d %s\r\n%s\r\n%s", r.Protocol, r.Status, StatusText(r.Status), r.HeadersString(), r.Body)
 }
 
 type Status int
@@ -151,10 +161,16 @@ func handleRequest(request Request) Response {
 	response := Response{}
 	response.Protocol = request.Protocol
 	response.Status = OK
-	response.AddHeader(NewHeader("Content-Type", "text/html"))
+	response.AddHeader(NewHeader("Content-Type", "text/plain"))
 
 	if request.Path != "/" {
-		response.Status = NotFound
+		echoSplit := strings.Split(request.Path, "/echo/")
+		if len(echoSplit) > 1 {
+			response.Body = echoSplit[1]
+			response.AddHeader(NewHeader("Content-Length", fmt.Sprintf("%d", len(response.Body))))
+		} else {
+			response.Status = NotFound
+		}
 	}
 
 	return response
