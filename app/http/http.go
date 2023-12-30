@@ -14,14 +14,10 @@ func Serve(addr string) {
 		os.Exit(1)
 	}
 
+	ch := make(chan net.Conn)
+	go acceptConnections(l, ch)
 	for {
-		conn, err := l.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
-		}
-
-		handle(conn)
+		go handle(<-ch)
 	}
 }
 
@@ -49,6 +45,17 @@ func handleRequest(request Request) Response {
 
 	response.Status = NotFound
 	return response
+}
+
+func acceptConnections(l net.Listener, ch chan net.Conn) {
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		ch <- conn
+	}
 }
 
 func handle(conn net.Conn) {
