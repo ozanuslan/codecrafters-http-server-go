@@ -128,7 +128,6 @@ func (s *Server) NotFound(request Request) Response {
 	response.Protocol = request.Protocol
 	response.Status = NotFound
 	response.AddHeader("Content-Type", "text/plain")
-	response.SetBody("Not Found")
 	return response
 }
 
@@ -137,6 +136,7 @@ type Request struct {
 	Path     string
 	Protocol string
 	Headers  map[string]string
+	Body     string
 }
 
 func NewRequest() Request {
@@ -147,14 +147,23 @@ func NewRequest() Request {
 
 func (r *Request) Unmarshal(buf []byte) {
 	s := string(buf)
+	s = strings.Replace(s, "\x00", "", -1)
 
 	split := strings.Split(s, "\r\n")
 	fmt.Println(split)
 	for i, line := range split {
 		if i == 0 {
 			r.parseRequestLine(line)
-		} else {
-			r.parseHeaderLine(line)
+			continue
+		}
+		isNotHeader, err := r.parseHeaderLine(line)
+		if isNotHeader {
+			r.Body = split[i+1]
+			break
+		}
+		if err != nil {
+			fmt.Println("Error parsing header line:", err.Error())
+			os.Exit(1)
 		}
 	}
 }
@@ -166,15 +175,16 @@ func (r *Request) parseRequestLine(line string) {
 	r.Protocol = split[2]
 }
 
-func (r *Request) parseHeaderLine(line string) {
+func (r *Request) parseHeaderLine(line string) (bool, error) {
 	split := strings.Split(line, ": ")
-	if len(split) < 2 {
-		return
+	if len(split) != 2 {
+		return true, fmt.Errorf("not a header line: %s", line)
 	}
 	if split[0] == "" {
-		return
+		return false, fmt.Errorf("invalid header line: %s", line)
 	}
 	r.Headers[split[0]] = split[1]
+	return false, nil
 }
 
 type Response struct {
@@ -265,15 +275,21 @@ type Status int
 
 const (
 	OK       Status = 200
+	Created  Status = 201
 	NotFound Status = 404
+	IntError Status = 500
 )
 
 func StatusText(status Status) string {
 	switch status {
 	case OK:
 		return "OK"
+	case Created:
+		return "Created"
 	case NotFound:
 		return "Not Found"
+	case IntError:
+		return "Internal Server Error"
 	}
 	return ""
 }

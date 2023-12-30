@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/codecrafters-io/http-server-starter-go/app/http"
 )
@@ -43,11 +44,30 @@ func main() {
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			response.AddHeader("Content-Type", "text/plain")
 			response.Status = http.NotFound
-			response.SetBody("Not Found")
 			return response
 		}
 		response.AddHeader("Content-Type", "application/octet-stream")
 		response.SetBodyFile(filePath)
+		return response
+	})
+
+	server.Handle(http.POST, "/files/", func(request http.Request) http.Response {
+		fileName := request.Path[7:]
+		fullPath := filepath.Join(directory, fileName)
+		file, err := os.Create(fullPath)
+		if err != nil {
+			response := http.NewResponse()
+			fmt.Println("Error creating file:", err)
+			response.Status = http.IntError
+			return response
+		}
+		defer file.Close()
+
+		file.Write([]byte(request.Body))
+
+		response := http.NewResponse()
+		response.AddHeader("Content-Type", "text/plain")
+		response.Status = http.Created
 		return response
 	})
 
