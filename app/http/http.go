@@ -30,14 +30,14 @@ func writeResponse(conn net.Conn, response Response) {
 }
 
 type RequestHandler struct {
-	Strict  bool
-	Handler HandlerFunc
+	Strict bool
+	Handle HandlerFunc
 }
 
 func NewRequestHandler(handler HandlerFunc) RequestHandler {
 	return RequestHandler{
-		Strict:  false,
-		Handler: handler,
+		Strict: false,
+		Handle: handler,
 	}
 }
 
@@ -103,13 +103,12 @@ func (s *Server) handle(conn net.Conn) {
 	request := readRequest(conn)
 
 	for path, method := range s.Handlers {
-		isPathMatch := strings.HasPrefix(request.Path, path)
-		if !isPathMatch {
+		if !strings.HasPrefix(request.Path, path) {
 			continue
 		}
 
 		handler := method[request.Method]
-		if handler.Handler == nil {
+		if handler.Handle == nil {
 			continue
 		}
 
@@ -117,7 +116,7 @@ func (s *Server) handle(conn net.Conn) {
 			continue
 		}
 
-		writeResponse(conn, handler.Handler(request))
+		writeResponse(conn, handler.Handle(request))
 	}
 
 	writeResponse(conn, s.NotFound(request))
