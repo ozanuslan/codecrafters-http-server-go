@@ -36,14 +36,15 @@ func main() {
 
 	server.Handle(http.GET, "/files/", func(request http.Request) http.Response {
 		response := http.NewResponse()
-		filePath := directory + request.Path[6:]
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		fileName := request.Path[6:]
+		fullPath := filepath.Join(directory, fileName)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			response.AddHeader("Content-Type", "text/plain")
 			response.Status = http.NotFound
 			return response
 		}
 		response.AddHeader("Content-Type", "application/octet-stream")
-		response.SetBodyFile(filePath)
+		response.SetBodyFile(fullPath)
 		return response
 	})
 
