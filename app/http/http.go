@@ -215,17 +215,25 @@ func CreatedResponse() Response {
 	return response
 }
 
-func (r *Response) AddHeader(key string, value string) {
+func (r *Response) SetStatus(status Status) *Response {
+	r.Status = status
+	return r
+}
+
+func (r *Response) AddHeader(key string, value string) *Response {
 	r.Headers[key] = value
+	return r
 }
 
-func (r *Response) RemoveHeader(key string) {
+func (r *Response) RemoveHeader(key string) *Response {
 	delete(r.Headers, key)
+	return r
 }
 
-func (r Response) ReplaceHeader(key string, value string) {
+func (r *Response) ReplaceHeader(key string, value string) *Response {
 	r.RemoveHeader(key)
 	r.AddHeader(key, value)
+	return r
 }
 
 func (r Response) HeadersString() string {
@@ -236,12 +244,13 @@ func (r Response) HeadersString() string {
 	return s
 }
 
-func (r *Response) SetBody(body string) {
+func (r *Response) SetBody(body string) *Response {
 	r.Body = body
 	r.AddHeader("Content-Length", fmt.Sprintf("%d", len(r.Body)))
+	return r
 }
 
-func (r *Response) SetBodyFile(filePath string) {
+func (r *Response) SetBodyFile(filePath string) *Response {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println("Error opening file: ", err.Error())
@@ -268,6 +277,7 @@ func (r *Response) SetBodyFile(filePath string) {
 	r.AddHeader("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	r.AddHeader("Content-Length", fmt.Sprintf("%d", fileSize))
 	r.Body = string(fileContent)
+	return r
 }
 
 func (r Response) Marshal() []byte {

@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/codecrafters-io/http-server-starter-go/app/http"
 )
@@ -13,7 +15,7 @@ var directory = "/tmp"
 func main() {
 	if len(os.Args) > 2 {
 		directory = os.Args[2]
-		fmt.Println("Serving files from", directory)
+		log.Println("Serving files from", directory)
 	}
 
 	server := http.NewServer("0.0.0.0:4221")
@@ -23,8 +25,21 @@ func main() {
 	})
 
 	server.Handle(http.GET, "/echo/", func(request http.Request) http.Response {
-		response := http.OKResponse()
-		response.SetBody(request.Path[6:])
+		echo := request.Path[6:]
+		response := http.NewResponse()
+		for header, value := range request.Headers {
+			if strings.ToLower(header) == "accept-encoding" {
+				if strings.TrimSpace(value) == "gzip" {
+					response.AddHeader("Content-Encoding", "gzip").
+						AddHeader("Content-Type", "text/plain").
+						SetBody(echo).
+						SetStatus(http.OK)
+					return response
+				}
+			}
+		}
+		response.AddHeader("Content-Type", "text/plain")
+		response.SetBody(echo)
 		return response
 	})
 
