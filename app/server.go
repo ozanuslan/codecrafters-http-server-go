@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"log"
 	"os"
@@ -32,9 +34,13 @@ func main() {
 				encodings := strings.Split(strings.TrimSpace(value), ", ")
 				for _, encoding := range encodings {
 					if encoding == "gzip" {
+						var buf bytes.Buffer
+						w := gzip.NewWriter(&buf)
+						w.Write([]byte(echo))
+						w.Close()
 						response.AddHeader("Content-Encoding", "gzip").
 							AddHeader("Content-Type", "text/plain").
-							SetBody(echo).
+							SetBody(buf.String()).
 							SetStatus(http.OK)
 						return response
 					}
