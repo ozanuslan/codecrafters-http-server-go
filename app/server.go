@@ -29,12 +29,15 @@ func main() {
 		response := http.NewResponse()
 		for header, value := range request.Headers {
 			if strings.ToLower(header) == "accept-encoding" {
-				if strings.TrimSpace(value) == "gzip" {
-					response.AddHeader("Content-Encoding", "gzip").
-						AddHeader("Content-Type", "text/plain").
-						SetBody(echo).
-						SetStatus(http.OK)
-					return response
+				encodings := strings.Split(strings.TrimSpace(value), ", ")
+				for _, encoding := range encodings {
+					if encoding == "gzip" {
+						response.AddHeader("Content-Encoding", "gzip").
+							AddHeader("Content-Type", "text/plain").
+							SetBody(echo).
+							SetStatus(http.OK)
+						return response
+					}
 				}
 			}
 		}
